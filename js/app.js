@@ -768,6 +768,7 @@ $('#address-form').addEventListener('submit', async (e) => {
   }
 
   const id = $('#edit-id').value || createId();
+  const existing = addresses.find((a) => a.id === id);
   let entry;
 
   if (isFlyer) {
@@ -791,9 +792,9 @@ $('#address-form').addEventListener('submit', async (e) => {
       flyerDelivered: $('#flyer-delivered').checked,
       flyerDate: $('#flyer-delivered').checked ? toISODate($('#flyer-date').value) : null,
       notes: $('#notes').value.trim() || null,
-      done: $('#done').checked,
-      invoiceSent: $('#invoice-sent').checked,
-      paymentReceived: $('#payment-received').checked,
+      done: !!existing?.done,
+      invoiceSent: !!existing?.invoiceSent,
+      paymentReceived: !!existing?.paymentReceived,
       lat,
       lng,
     });
@@ -852,9 +853,6 @@ function openEdit(id) {
     $('#flyer-date').value = toISODate(a.flyerDate) || '';
     $('#flyer-date-wrap').classList.toggle('hidden', !a.flyerDelivered);
     $('#notes').value = a.notes || '';
-    $('#done').checked = !!a.done;
-    $('#invoice-sent').checked = !!a.invoiceSent;
-    $('#payment-received').checked = !!a.paymentReceived;
   }
 
   $('#lat').value = a.lat ?? '';
