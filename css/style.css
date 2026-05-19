@@ -483,6 +483,7 @@ main {
   display: block;
   margin: 0;
   cursor: pointer;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -765,6 +766,11 @@ body.modal-open main {
   padding: 1rem 1.25rem;
 }
 
+.detail-checks,
+.detail-check-label input {
+  touch-action: manipulation;
+}
+
 #detail-content h2 {
   font-size: 1.15rem;
   font-weight: 700;
@@ -808,6 +814,7 @@ body.modal-open main {
   min-height: var(--touch);
   font-size: 0.95rem;
   cursor: pointer;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 

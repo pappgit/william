@@ -23,6 +23,7 @@ let detailConvertMode = false;
 let pickMode = false;
 let repairingCoords = false;
 let initMapAttempts = 0;
+let skipAddFormReset = false;
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -56,16 +57,25 @@ function toast(msg) {
 
 // —— Visninger ——
 
-document.querySelectorAll('.tab').forEach((tab) => {
-  tab.addEventListener('click', () => {
-    closeDetailModal();
-    const view = tab.dataset.view;
-    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
-    document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
-    $(`#view-${view}`).classList.add('active');
-    if (view === 'map') activateMapView();
-    if (view === 'add' && !$('#edit-id').value) resetForm();
+function switchToView(view) {
+  closeDetailModal();
+  document.querySelectorAll('.tab').forEach((t) => {
+    t.classList.toggle('active', t.dataset.view === view);
   });
+  document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
+  $(`#view-${view}`).classList.add('active');
+  if (view === 'map') activateMapView();
+  if (view === 'add') {
+    if (skipAddFormReset) {
+      skipAddFormReset = false;
+    } else {
+      resetForm();
+    }
+  }
+}
+
+document.querySelectorAll('.tab').forEach((tab) => {
+  tab.addEventListener('click', () => switchToView(tab.dataset.view));
 });
 
 ['search', 'filter-status', 'filter-size', 'filter-flyer', 'filter-sort'].forEach((id) => {
@@ -85,6 +95,18 @@ $('#filter-reset')?.addEventListener('click', () => {
 document.querySelectorAll('input[name="entry-type"]').forEach((r) => {
   r.addEventListener('change', updateFormForEntryType);
 });
+
+function bindTypeOptionClicks() {
+  document.querySelectorAll('.type-option').forEach((label) => {
+    label.addEventListener('click', (e) => {
+      const radio = label.querySelector('input[type="radio"]');
+      if (!radio || radio.disabled) return;
+      if (e.target === radio) return;
+      radio.checked = true;
+      updateFormForEntryType();
+    });
+  });
+}
 
 function isFilterActive() {
   return (
@@ -230,9 +252,6 @@ function toggleAddressFlag(id, field, value) {
   saveAddresses(addresses);
   renderList();
   if (field === 'done') refreshMap();
-  if (selectedDetailId === id && !$('#detail-overlay').classList.contains('hidden')) {
-    showDetail(id, detailConvertMode);
-  }
 }
 
 function updateAddressField(id, patch) {
@@ -252,21 +271,22 @@ function detailCheckRow(id, field, checked, label) {
   </label>`;
 }
 
-function bindDetailInteractions(id) {
-  $('#detail-content').querySelectorAll('.detail-check').forEach((cb) => {
-    cb.addEventListener('click', (e) => e.stopPropagation());
-    cb.addEventListener('change', (e) => {
+function initDetailDelegation() {
+  const wrap = $('#detail-scroll-wrap');
+  if (!wrap || wrap.dataset.bound) return;
+  wrap.dataset.bound = '1';
+  wrap.addEventListener('change', (e) => {
+    const cb = e.target.closest('.detail-check');
+    if (cb) {
       e.stopPropagation();
       toggleAddressFlag(cb.dataset.id, cb.dataset.field, cb.checked);
-    });
+      return;
+    }
+    const dateInput = e.target.closest('.detail-date-input');
+    if (dateInput && selectedDetailId) {
+      updateAddressField(selectedDetailId, { lastMowed: toISODate(dateInput.value) });
+    }
   });
-  const dateInput = $('#detail-content').querySelector('.detail-date-input');
-  if (dateInput) {
-    dateInput.addEventListener('change', () => {
-      updateAddressField(id, { lastMowed: toISODate(dateInput.value) });
-      if (selectedDetailId === id) showDetail(id, detailConvertMode);
-    });
-  }
 }
 
 function bindDateQuickButtons() {
@@ -440,7 +460,6 @@ function showDetail(id, convertMode = false) {
         : ''
     }
   `;
-  bindDetailInteractions(id);
   $('#detail-convert').classList.toggle('hidden', !flyer || convertMode);
   setDetailConvertMode(convertMode && flyer);
   if ($('#detail-overlay').classList.contains('hidden')) openDetailModal();
@@ -542,7 +561,8 @@ function initMap() {
     $('#lng').value = e.latlng.lng;
     pickMode = false;
     toast('Posisjon satt – lagre adressen');
-    document.querySelector('[data-view="add"]').click();
+    skipAddFormReset = true;
+    switchToView('add');
     L.marker(e.latlng).addTo(map);
   });
 }
@@ -678,13 +698,13 @@ async function runGeocode(addressInputId) {
     const coords = await geocodeQuery(q);
     if (!coords) {
       toast('Fant ikke adressen – trykk i kartet');
-      document.querySelector('[data-view="map"]').click();
+      switchToView('map');
       pickMode = true;
       return;
     }
     setCoords(coords.lat, coords.lng);
     toast('Posisjon funnet');
-    document.querySelector('[data-view="map"]').click();
+    switchToView('map');
     setTimeout(() => {
       initMap();
       map?.invalidateSize();
@@ -789,7 +809,7 @@ $('#address-form').addEventListener('submit', async (e) => {
   renderList();
   initMap();
   refreshMap();
-  document.querySelector('[data-view="list"]').click();
+  switchToView('list');
 });
 
 function resetForm() {
@@ -813,7 +833,8 @@ function resetForm() {
 function openEdit(id) {
   const a = addresses.find((x) => x.id === id);
   if (!a) return;
-  document.querySelector('[data-view="add"]').click();
+  skipAddFormReset = true;
+  switchToView('add');
   $('#edit-id').value = a.id;
   const flyer = isFlyerEntry(a);
   setFormEntryType(flyer ? 'flyer' : 'order');
@@ -844,7 +865,7 @@ function openEdit(id) {
 
 $('#btn-cancel').addEventListener('click', () => {
   resetForm();
-  document.querySelector('[data-view="list"]').click();
+  switchToView('list');
 });
 
 $('#btn-delete').addEventListener('click', () => {
@@ -852,7 +873,7 @@ $('#btn-delete').addEventListener('click', () => {
   if (!id) return;
   if (deleteAddress(id)) {
     resetForm();
-    document.querySelector('[data-view="list"]').click();
+    switchToView('list');
   }
 });
 
@@ -896,6 +917,8 @@ async function bootstrap() {
   renderList();
   updateChromeHeight();
   bindDateQuickButtons();
+  bindTypeOptionClicks();
+  initDetailDelegation();
 
   window.addEventListener('resize', () => {
     scheduleChromeHeightUpdate();
