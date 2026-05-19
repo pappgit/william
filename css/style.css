@@ -361,6 +361,8 @@ main {
 /* —— Map —— */
 .view-map {
   padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .map-wrap {
@@ -368,6 +370,9 @@ main {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
+  /* Fallback når flex-høyde feiler (vanlig på iOS) */
+  height: calc(100dvh - var(--chrome-h, 108px));
+  min-height: calc(100dvh - var(--chrome-h, 108px));
   overflow: hidden;
 }
 

@@ -22,6 +22,7 @@ let selectedDetailId = null;
 let detailConvertMode = false;
 let pickMode = false;
 let repairingCoords = false;
+let initMapAttempts = 0;
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -35,7 +36,10 @@ function updateChromeHeight() {
 let chromeResizeTimer;
 function scheduleChromeHeightUpdate() {
   clearTimeout(chromeResizeTimer);
-  chromeResizeTimer = setTimeout(updateChromeHeight, 50);
+  chromeResizeTimer = setTimeout(() => {
+    updateChromeHeight();
+    resizeMap();
+  }, 50);
 }
 
 function toast(msg) {
@@ -59,20 +63,7 @@ document.querySelectorAll('.tab').forEach((tab) => {
     document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
     document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
     $(`#view-${view}`).classList.add('active');
-    if (view === 'map') {
-      requestAnimationFrame(() => {
-        initMap();
-        requestAnimationFrame(() => {
-          resizeMap();
-          setTimeout(async () => {
-            resizeMap();
-            await repairMissingCoords();
-            refreshMap();
-            resizeMap();
-          }, 200);
-        });
-      });
-    }
+    if (view === 'map') activateMapView();
     if (view === 'add' && !$('#edit-id').value) resetForm();
   });
 });
@@ -491,15 +482,42 @@ $('#detail-edit').addEventListener('click', () => {
 // —— Kart ——
 
 function resizeMap() {
-  if (!map || !$('#view-map').classList.contains('active')) return;
+  if (!map || !$('#view-map')?.classList.contains('active')) return;
   map.invalidateSize({ animate: false });
 }
 
+function activateMapView() {
+  requestAnimationFrame(() => {
+    updateChromeHeight();
+    requestAnimationFrame(() => {
+      if (typeof L === 'undefined') {
+        toast('Kart kunne ikke lastes – sjekk nettforbindelse');
+        return;
+      }
+      initMap();
+      resizeMap();
+      setTimeout(async () => {
+        resizeMap();
+        await repairMissingCoords();
+        refreshMap();
+        resizeMap();
+      }, 300);
+    });
+  });
+}
+
 function initMap() {
+  if (typeof L === 'undefined') return;
   if (map) {
     resizeMap();
     return;
   }
+  const mapEl = document.getElementById('map');
+  if (!mapEl || mapEl.offsetHeight < 20) {
+    if (initMapAttempts++ < 40) setTimeout(initMap, 80);
+    return;
+  }
+  initMapAttempts = 0;
   map = L.map('map', { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap',
@@ -885,7 +903,10 @@ async function bootstrap() {
   });
   window.addEventListener('orientationchange', () => {
     scheduleChromeHeightUpdate();
-    setTimeout(updateChromeHeight, 150);
+    setTimeout(() => {
+      updateChromeHeight();
+      resizeMap();
+    }, 200);
   });
 
   await initSync((list) => {
