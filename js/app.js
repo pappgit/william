@@ -64,6 +64,10 @@ $('#filter-reset')?.addEventListener('click', () => {
   renderList();
 });
 
+document.querySelectorAll('input[name="entry-type"]').forEach((r) => {
+  r.addEventListener('change', updateFormForEntryType);
+});
+
 function isFilterActive() {
   return (
     $('#search').value.trim() !== '' ||
@@ -82,8 +86,14 @@ function filterAndSortList() {
 
   let list = [...addresses];
 
-  if (status !== 'all') {
-    list = list.filter((a) => getStatus(a) === status);
+  if (status === 'flyer') {
+    list = list.filter((a) => isFlyerEntry(a));
+  } else if (status === 'order') {
+    list = list.filter((a) => isOrderEntry(a));
+  } else if (status === 'mowed') {
+    list = list.filter((a) => isOrderEntry(a) && a.lastMowed);
+  } else if (status === 'none') {
+    list = list.filter((a) => isOrderEntry(a) && !a.lastMowed);
   }
   if (size !== 'all') {
     list = list.filter((a) => (a.size || 'medium') === size);
@@ -144,17 +154,33 @@ function renderList() {
 
   for (const a of list) {
     const tr = document.createElement('tr');
+    const flyer = isFlyerEntry(a);
+    const convertBtn = flyer
+      ? `<button type="button" class="btn-convert" data-id="${escapeHtml(a.id)}">→ Ordre</button>`
+      : '';
     tr.innerHTML = `
+      <td class="type-cell">
+        <span class="badge type-${flyer ? 'flyer' : 'order'}">${entryTypeLabel(a)}</span>
+        ${convertBtn}
+      </td>
       <td class="addr">${escapeHtml(a.address)}</td>
-      <td>${formatDate(a.lastMowed)}</td>
-      <td>${formatSize(a.size)}</td>
-      <td>${a.price != null && a.price !== '' ? a.price + ' kr' : '–'}</td>
-      <td><span class="badge ${a.flyerDelivered ? 'yes' : 'no'}">${a.flyerDelivered ? formatDate(a.flyerDate) : 'Nei'}</span></td>
-      <td class="note-cell">${a.notes ? escapeHtml(a.notes) : '–'}</td>
-      ${listCheckCell(a.id, 'done', a.done, 'Ferdig')}
+      <td>${flyer ? '–' : formatDate(a.lastMowed)}</td>
+      <td>${flyer ? '–' : formatSize(a.size)}</td>
+      <td>${flyer ? '–' : a.price != null && a.price !== '' ? a.price + ' kr' : '–'}</td>
+      <td>${flyer ? formatDate(a.flyerDate) : a.flyerDelivered ? formatDate(a.flyerDate) : 'Nei'}</td>
+      <td class="note-cell">${flyer ? '–' : a.notes ? escapeHtml(a.notes) : '–'}</td>
+      ${
+        flyer
+          ? '<td class="check-cell muted-cell" colspan="3">–</td>'
+          : `${listCheckCell(a.id, 'done', a.done, 'Ferdig')}
       ${listCheckCell(a.id, 'invoiceSent', a.invoiceSent, 'Sendt faktura')}
-      ${listCheckCell(a.id, 'paymentReceived', a.paymentReceived, 'Mottatt betaling')}
+      ${listCheckCell(a.id, 'paymentReceived', a.paymentReceived, 'Mottatt betaling')}`
+      }
     `;
+    tr.querySelector('.btn-convert')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      convertFlyerToOrder(a.id);
+    });
     tr.querySelectorAll('.list-check').forEach((cb) => {
       cb.addEventListener('click', (e) => e.stopPropagation());
       cb.addEventListener('change', (e) => {
@@ -188,6 +214,49 @@ function toggleAddressFlag(id, field, value) {
   if (field === 'done') refreshMap();
 }
 
+function convertFlyerToOrder(id) {
+  const idx = addresses.findIndex((x) => x.id === id);
+  if (idx < 0 || !isFlyerEntry(addresses[idx])) return;
+  addresses[idx] = normalizeAddress({
+    ...addresses[idx],
+    entryType: 'order',
+    flyerDelivered: true,
+  });
+  saveAddresses(addresses);
+  renderList();
+  refreshMap();
+  toast('Flyer konvertert til ordre');
+  openEdit(id);
+}
+
+function getFormEntryType() {
+  return document.querySelector('input[name="entry-type"]:checked')?.value;
+}
+
+function updateFormForEntryType() {
+  const t = getFormEntryType();
+  $('#flyer-only-fields').classList.toggle('hidden', t !== 'flyer');
+  $('#order-fields').classList.toggle('hidden', t !== 'order');
+  $('#flyer-address').required = t === 'flyer';
+  $('#flyer-sent-date').required = t === 'flyer';
+  $('#address').required = t === 'order';
+  if (t === 'flyer' && !$('#flyer-sent-date').value) {
+    $('#flyer-sent-date').value = new Date().toISOString().slice(0, 10);
+  }
+}
+
+function setFormEntryType(type) {
+  const radio = document.querySelector(`input[name="entry-type"][value="${type}"]`);
+  if (radio) radio.checked = true;
+  updateFormForEntryType();
+}
+
+function lockEntryTypePicker(locked) {
+  document.querySelectorAll('input[name="entry-type"]').forEach((r) => {
+    r.disabled = locked;
+  });
+}
+
 function updateFilterSummary(shown) {
   const el = $('#filter-summary');
   if (!isFilterActive()) {
@@ -213,7 +282,8 @@ function popupContent(a) {
     <div class="map-popup">
       <strong class="map-popup-title">${escapeHtml(a.address)}</strong>
       <dl class="map-popup-dl">
-        <dt>Størrelse</dt><dd>${formatSize(a.size)}</dd>
+        <dt>Type</dt><dd>${entryTypeLabel(a)}</dd>
+        <dt>Størrelse</dt><dd>${isFlyerEntry(a) ? '–' : formatSize(a.size)}</dd>
         <dt>Pris</dt><dd>${priceText}</dd>
         <dt>Sist klippet</dt><dd>${formatDate(a.lastMowed)}</dd>
         <dt>Flyer</dt><dd>${flyerText}</dd>
@@ -230,22 +300,31 @@ function showDetail(id) {
   const a = addresses.find((x) => x.id === id);
   if (!a) return;
   selectedDetailId = id;
+  const flyer = isFlyerEntry(a);
   $('#detail-content').innerHTML = `
     <h2>${escapeHtml(a.address)}</h2>
+    <p><span class="badge type-${flyer ? 'flyer' : 'order'}">${entryTypeLabel(a)}</span></p>
     <dl>
-      <dt>Sist klippet</dt><dd>${formatDate(a.lastMowed)}</dd>
-      <dt>Størrelse</dt><dd>${formatSize(a.size)}</dd>
-      <dt>Pris</dt><dd>${a.price != null && a.price !== '' ? a.price + ' kr' : '–'}</dd>
-      <dt>Flyer</dt><dd>${a.flyerDelivered ? 'Ja, ' + formatDate(a.flyerDate) : 'Nei'}</dd>
-      ${a.notes ? `<dt>Notat</dt><dd>${escapeHtml(a.notes)}</dd>` : ''}
-      <dt>Ferdig</dt><dd>${a.done ? 'Ja' : 'Nei'}</dd>
-      <dt>Sendt faktura</dt><dd>${a.invoiceSent ? 'Ja' : 'Nei'}</dd>
-      <dt>Mottatt betaling</dt><dd>${a.paymentReceived ? 'Ja' : 'Nei'}</dd>
+      ${flyer ? `<dt>Sendt ut</dt><dd>${formatDate(a.flyerDate)}</dd>` : ''}
+      ${!flyer ? `<dt>Sist klippet</dt><dd>${formatDate(a.lastMowed)}</dd>` : ''}
+      ${!flyer ? `<dt>Størrelse</dt><dd>${formatSize(a.size)}</dd>` : ''}
+      ${!flyer ? `<dt>Pris</dt><dd>${a.price != null && a.price !== '' ? a.price + ' kr' : '–'}</dd>` : ''}
+      ${!flyer ? `<dt>Flyer tidligere</dt><dd>${a.flyerDelivered ? 'Ja, ' + formatDate(a.flyerDate) : 'Nei'}</dd>` : ''}
+      ${a.notes && !flyer ? `<dt>Notat</dt><dd>${escapeHtml(a.notes)}</dd>` : ''}
+      ${!flyer ? `<dt>Ferdig</dt><dd>${a.done ? 'Ja' : 'Nei'}</dd>` : ''}
+      ${!flyer ? `<dt>Sendt faktura</dt><dd>${a.invoiceSent ? 'Ja' : 'Nei'}</dd>` : ''}
+      ${!flyer ? `<dt>Mottatt betaling</dt><dd>${a.paymentReceived ? 'Ja' : 'Nei'}</dd>` : ''}
       ${!hasCoords(a) ? '<dt>Kart</dt><dd>Mangler posisjon</dd>' : ''}
     </dl>
   `;
+  $('#detail-convert').classList.toggle('hidden', !flyer);
   $('#detail-dialog').showModal();
 }
+
+$('#detail-convert').addEventListener('click', () => {
+  $('#detail-dialog').close();
+  if (selectedDetailId) convertFlyerToOrder(selectedDetailId);
+});
 
 $('#detail-edit').addEventListener('click', () => {
   $('#detail-dialog').close();
@@ -400,8 +479,8 @@ function setCoords(lat, lng) {
   $('#lng').value = lng;
 }
 
-$('#btn-geocode').addEventListener('click', async () => {
-  const q = $('#address').value.trim();
+async function runGeocode(addressInputId) {
+  const q = $(addressInputId).value.trim();
   if (!q) {
     toast('Skriv inn adresse først');
     return;
@@ -430,12 +509,33 @@ $('#btn-geocode').addEventListener('click', async () => {
   } finally {
     $('#btn-geocode').disabled = false;
     $('#btn-geocode').textContent = 'Finn på kart';
+    $('#btn-geocode-flyer').disabled = false;
+    $('#btn-geocode-flyer').textContent = 'Finn på kart';
   }
-});
+}
+
+$('#btn-geocode').addEventListener('click', () => runGeocode('#address'));
+$('#btn-geocode-flyer').addEventListener('click', () => runGeocode('#flyer-address'));
 
 $('#address-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const addressText = $('#address').value.trim();
+  const entryType = getFormEntryType();
+  if (!entryType) {
+    toast('Velg Flyer eller Ordre først');
+    return;
+  }
+
+  const isFlyer = entryType === 'flyer';
+  const addressText = isFlyer ? $('#flyer-address').value.trim() : $('#address').value.trim();
+  if (!addressText) {
+    toast('Skriv inn adresse');
+    return;
+  }
+  if (isFlyer && !$('#flyer-sent-date').value) {
+    toast('Velg dato for når flyer ble sendt ut');
+    return;
+  }
+
   let lat = parseCoord($('#lat').value);
   let lng = parseCoord($('#lng').value);
 
@@ -461,21 +561,36 @@ $('#address-form').addEventListener('submit', async (e) => {
   }
 
   const id = $('#edit-id').value || createId();
-  const entry = normalizeAddress({
-    id,
-    address: addressText,
-    size: $('#size').value,
-    price: $('#price').value === '' ? null : Number($('#price').value),
-    lastMowed: $('#last-mowed').value || null,
-    flyerDelivered: $('#flyer-delivered').checked,
-    flyerDate: $('#flyer-delivered').checked ? $('#flyer-date').value || null : null,
-    notes: $('#notes').value.trim() || null,
-    done: $('#done').checked,
-    invoiceSent: $('#invoice-sent').checked,
-    paymentReceived: $('#payment-received').checked,
-    lat,
-    lng,
-  });
+  let entry;
+
+  if (isFlyer) {
+    entry = normalizeAddress({
+      id,
+      entryType: 'flyer',
+      address: addressText,
+      flyerDate: $('#flyer-sent-date').value,
+      flyerDelivered: true,
+      lat,
+      lng,
+    });
+  } else {
+    entry = normalizeAddress({
+      id,
+      entryType: 'order',
+      address: addressText,
+      size: $('#size').value,
+      price: $('#price').value === '' ? null : Number($('#price').value),
+      lastMowed: $('#last-mowed').value || null,
+      flyerDelivered: $('#flyer-delivered').checked,
+      flyerDate: $('#flyer-delivered').checked ? $('#flyer-date').value || null : null,
+      notes: $('#notes').value.trim() || null,
+      done: $('#done').checked,
+      invoiceSent: $('#invoice-sent').checked,
+      paymentReceived: $('#payment-received').checked,
+      lat,
+      lng,
+    });
+  }
 
   const idx = addresses.findIndex((a) => a.id === id);
   if (idx >= 0) addresses[idx] = entry;
@@ -500,6 +615,12 @@ function resetForm() {
   $('#lat').value = '';
   $('#lng').value = '';
   pickMode = false;
+  lockEntryTypePicker(false);
+  document.querySelectorAll('input[name="entry-type"]').forEach((r) => {
+    r.checked = false;
+  });
+  $('#flyer-only-fields').classList.add('hidden');
+  $('#order-fields').classList.add('hidden');
 }
 
 function openEdit(id) {
@@ -507,17 +628,27 @@ function openEdit(id) {
   if (!a) return;
   document.querySelector('[data-view="add"]').click();
   $('#edit-id').value = a.id;
-  $('#address').value = a.address;
-  $('#size').value = a.size || 'medium';
-  $('#price').value = a.price ?? '';
-  $('#last-mowed').value = a.lastMowed || '';
-  $('#flyer-delivered').checked = !!a.flyerDelivered;
-  $('#flyer-date').value = a.flyerDate || '';
-  $('#flyer-date-wrap').classList.toggle('hidden', !a.flyerDelivered);
-  $('#notes').value = a.notes || '';
-  $('#done').checked = !!a.done;
-  $('#invoice-sent').checked = !!a.invoiceSent;
-  $('#payment-received').checked = !!a.paymentReceived;
+  const flyer = isFlyerEntry(a);
+  setFormEntryType(flyer ? 'flyer' : 'order');
+  lockEntryTypePicker(!flyer);
+
+  if (flyer) {
+    $('#flyer-address').value = a.address;
+    $('#flyer-sent-date').value = a.flyerDate || '';
+  } else {
+    $('#address').value = a.address;
+    $('#size').value = a.size || 'medium';
+    $('#price').value = a.price ?? '';
+    $('#last-mowed').value = a.lastMowed || '';
+    $('#flyer-delivered').checked = !!a.flyerDelivered;
+    $('#flyer-date').value = a.flyerDate || '';
+    $('#flyer-date-wrap').classList.toggle('hidden', !a.flyerDelivered);
+    $('#notes').value = a.notes || '';
+    $('#done').checked = !!a.done;
+    $('#invoice-sent').checked = !!a.invoiceSent;
+    $('#payment-received').checked = !!a.paymentReceived;
+  }
+
   $('#lat').value = a.lat ?? '';
   $('#lng').value = a.lng ?? '';
   $('#btn-cancel').classList.remove('hidden');

@@ -31,9 +31,10 @@
       <div class="filters">
         <input type="search" id="search" placeholder="Søk adresse…" autocomplete="off">
         <select id="filter-status" title="Status">
-          <option value="all">Status: alle</option>
-          <option value="mowed">Klippet</option>
+          <option value="all">Type: alle</option>
           <option value="flyer">Kun flyer</option>
+          <option value="order">Kun ordre</option>
+          <option value="mowed">Klippet</option>
           <option value="none">Ikke besøkt</option>
         </select>
         <select id="filter-size" title="Størrelse">
@@ -60,6 +61,7 @@
         <table class="data-table">
           <thead>
             <tr>
+              <th>Type</th>
               <th>Adresse</th>
               <th>Klippet</th>
               <th>Størrelse</th>
@@ -89,60 +91,89 @@
     <section id="view-add" class="view">
       <form id="address-form" class="form">
         <input type="hidden" id="edit-id">
-        <label>
-          Adresse
-          <input type="text" id="address" required placeholder="f.eks. Bjørkeveien 12">
-        </label>
-        <button type="button" id="btn-geocode" class="btn secondary">Finn på kart</button>
 
-        <label>
-          Størrelse
-          <select id="size">
-            <option value="liten">Liten</option>
-            <option value="medium" selected>Medium</option>
-            <option value="stor">Stor</option>
-          </select>
-        </label>
-
-        <label>
-          Pris (kr)
-          <input type="number" id="price" min="0" step="1" placeholder="150">
-        </label>
-
-        <label>
-          Sist klippet
-          <input type="date" id="last-mowed">
-        </label>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="flyer-delivered">
-          Flyer levert
-        </label>
-        <label id="flyer-date-wrap" class="hidden">
-          Flyer dato
-          <input type="date" id="flyer-date">
-        </label>
-
-        <label>
-          Notat (valgfritt)
-          <input type="text" id="notes" placeholder="f.eks. hund i hagen">
-        </label>
-
-        <fieldset class="fieldset-checks">
-          <legend>Økonomi / status</legend>
-          <label class="checkbox-label">
-            <input type="checkbox" id="done">
-            Ferdig
+        <fieldset class="entry-type-picker" id="entry-type-picker">
+          <legend>Hva legger du inn? *</legend>
+          <label class="type-option">
+            <input type="radio" name="entry-type" value="flyer">
+            <span class="type-label">Flyer</span>
+            <small>Adresse og når den ble sendt ut</small>
           </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="invoice-sent">
-            Sendt faktura
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="payment-received">
-            Mottatt betaling
+          <label class="type-option">
+            <input type="radio" name="entry-type" value="order">
+            <span class="type-label">Ordre</span>
+            <small>Full jobbregistrering</small>
           </label>
         </fieldset>
+
+        <div id="flyer-only-fields" class="form-section hidden">
+          <label>
+            Adresse
+            <input type="text" id="flyer-address" placeholder="f.eks. Bjørkeveien 12">
+          </label>
+          <label>
+            Sendt ut (dato)
+            <input type="date" id="flyer-sent-date" required>
+          </label>
+          <button type="button" id="btn-geocode-flyer" class="btn secondary">Finn på kart</button>
+        </div>
+
+        <div id="order-fields" class="form-section hidden">
+          <label>
+            Adresse
+            <input type="text" id="address" placeholder="f.eks. Bjørkeveien 12">
+          </label>
+          <button type="button" id="btn-geocode" class="btn secondary">Finn på kart</button>
+
+          <label>
+            Størrelse
+            <select id="size">
+              <option value="liten">Liten</option>
+              <option value="medium" selected>Medium</option>
+              <option value="stor">Stor</option>
+            </select>
+          </label>
+
+          <label>
+            Pris (kr)
+            <input type="number" id="price" min="0" step="1" placeholder="150">
+          </label>
+
+          <label>
+            Sist klippet
+            <input type="date" id="last-mowed">
+          </label>
+
+          <label class="checkbox-label">
+            <input type="checkbox" id="flyer-delivered">
+            Også fått flyer tidligere
+          </label>
+          <label id="flyer-date-wrap" class="hidden">
+            Flyer sendt ut
+            <input type="date" id="flyer-date">
+          </label>
+
+          <label>
+            Notat (valgfritt)
+            <input type="text" id="notes" placeholder="f.eks. hund i hagen">
+          </label>
+
+          <fieldset class="fieldset-checks">
+            <legend>Økonomi / status</legend>
+            <label class="checkbox-label">
+              <input type="checkbox" id="done">
+              Ferdig
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="invoice-sent">
+              Sendt faktura
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="payment-received">
+              Mottatt betaling
+            </label>
+          </fieldset>
+        </div>
 
         <input type="hidden" id="lat">
         <input type="hidden" id="lng">
@@ -153,7 +184,7 @@
           <button type="button" id="btn-delete" class="btn danger hidden">Slett</button>
         </div>
       </form>
-      <p class="hint">Endringer synkes automatisk til alle enheter. Posisjon hentes ved lagring – bruk «Finn på kart» for å justere.</p>
+      <p class="hint">Velg Flyer eller Ordre først. Flyer kan senere konverteres til ordre fra listen.</p>
     </section>
   </main>
 
@@ -161,6 +192,7 @@
     <div id="detail-content"></div>
     <form method="dialog" class="dialog-actions">
       <button type="submit" class="btn secondary">Lukk</button>
+      <button type="button" id="detail-convert" class="btn secondary hidden">Konverter til ordre</button>
       <button type="button" id="detail-edit" class="btn primary">Rediger</button>
     </form>
   </dialog>

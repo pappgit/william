@@ -60,8 +60,21 @@ function importData(file) {
   });
 }
 
-/** Status for kartfarge og filtrering */
+function isFlyerEntry(addr) {
+  return addr.entryType === 'flyer';
+}
+
+function isOrderEntry(addr) {
+  return !isFlyerEntry(addr);
+}
+
+function entryTypeLabel(addr) {
+  return isFlyerEntry(addr) ? 'Flyer' : 'Ordre';
+}
+
+/** Status for listefiltrering (ordre) */
 function getStatus(addr) {
+  if (isFlyerEntry(addr)) return 'flyer';
   if (addr.lastMowed) return 'mowed';
   if (addr.flyerDelivered) return 'flyer';
   return 'none';
@@ -83,13 +96,16 @@ function normalizeAddress(a) {
   const lat = parseCoord(a.lat);
   const lng = parseCoord(a.lng) ?? parseCoord(a.lon);
   const { lon, ...rest } = a;
+  const entryType = a.entryType === 'flyer' ? 'flyer' : 'order';
   return {
     ...rest,
     lat,
     lng,
-    done: !!a.done,
-    invoiceSent: !!a.invoiceSent,
-    paymentReceived: !!a.paymentReceived,
+    entryType,
+    done: entryType === 'flyer' ? false : !!a.done,
+    invoiceSent: entryType === 'flyer' ? false : !!a.invoiceSent,
+    paymentReceived: entryType === 'flyer' ? false : !!a.paymentReceived,
+    flyerDelivered: entryType === 'flyer' ? true : !!a.flyerDelivered,
   };
 }
 

@@ -288,6 +288,92 @@ main {
   margin-bottom: 0;
 }
 
+.entry-type-picker {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.entry-type-picker legend {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  padding: 0 0.25rem;
+}
+
+.type-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.type-option:last-child {
+  margin-bottom: 0;
+}
+
+.type-option:has(input:checked) {
+  border-color: var(--green);
+  background: #eef5f0;
+}
+
+.type-option input {
+  margin-right: 0.35rem;
+}
+
+.type-label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.type-option small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-left: 1.35rem;
+}
+
+.form-section.hidden {
+  display: none;
+}
+
+.badge.type-flyer {
+  background: #fff3cd;
+  color: #664d03;
+}
+
+.badge.type-order {
+  background: #d8f3dc;
+  color: var(--green);
+}
+
+.type-cell {
+  min-width: 4.5rem;
+  vertical-align: top;
+}
+
+.btn-convert {
+  display: block;
+  margin-top: 0.35rem;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.7rem;
+  border: 1px solid var(--green);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--green);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.muted-cell {
+  color: var(--muted);
+  text-align: center;
+}
+
 .badge {
   display: inline-block;
   padding: 0.15rem 0.4rem;
