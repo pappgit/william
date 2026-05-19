@@ -40,6 +40,7 @@ function toast(msg) {
 
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.addEventListener('click', () => {
+    closeDetailModal();
     const view = tab.dataset.view;
     document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
     document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
@@ -264,6 +265,7 @@ function openDetailModal() {
 
 function closeDetailModal() {
   const overlay = $('#detail-overlay');
+  if (overlay.classList.contains('hidden')) return;
   overlay.classList.add('hidden');
   overlay.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('modal-open');
