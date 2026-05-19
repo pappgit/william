@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#2d6a4f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>William – Gressklipp</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="header">
+    <h1>William Gressklipp</h1>
+    <div class="header-actions">
+      <span id="sync-status" class="sync-status loading" title="Kobler til…"></span>
+      <button type="button" id="btn-export" class="btn-icon" title="Eksporter data">↓</button>
+      <button type="button" id="btn-import" class="btn-icon" title="Importer data">↑</button>
+      <input type="file" id="import-file" accept=".json" hidden>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button type="button" class="tab active" data-view="list">Liste</button>
+    <button type="button" class="tab" data-view="map">Kart</button>
+    <button type="button" class="tab" data-view="add">Ny</button>
+  </nav>
+
+  <main>
+    <section id="view-list" class="view active">
+      <div class="filters">
+        <input type="search" id="search" placeholder="Søk adresse…" autocomplete="off">
+        <select id="filter-status">
+          <option value="all">Alle</option>
+          <option value="mowed">Klippet</option>
+          <option value="flyer">Flyer levert</option>
+          <option value="none">Ikke besøkt</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Adresse</th>
+              <th>Klippet</th>
+              <th>Størrelse</th>
+              <th>Pris</th>
+              <th>Flyer</th>
+              <th>Notat</th>
+            </tr>
+          </thead>
+          <tbody id="list-body"></tbody>
+        </table>
+        <p id="list-empty" class="empty hidden">Ingen adresser ennå. Trykk «Ny» for å legge til.</p>
+      </div>
+    </section>
+
+    <section id="view-map" class="view">
+      <div class="map-legend">
+        <span class="legend-item"><i class="dot mowed"></i> Klippet</span>
+        <span class="legend-item"><i class="dot flyer"></i> Kun flyer</span>
+        <span class="legend-item"><i class="dot none"></i> Ikke besøkt</span>
+      </div>
+      <div id="map"></div>
+    </section>
+
+    <section id="view-add" class="view">
+      <form id="address-form" class="form">
+        <input type="hidden" id="edit-id">
+        <label>
+          Adresse
+          <input type="text" id="address" required placeholder="f.eks. Bjørkeveien 12">
+        </label>
+        <button type="button" id="btn-geocode" class="btn secondary">Finn på kart</button>
+
+        <label>
+          Størrelse
+          <select id="size">
+            <option value="liten">Liten</option>
+            <option value="medium" selected>Medium</option>
+            <option value="stor">Stor</option>
+          </select>
+        </label>
+
+        <label>
+          Pris (kr)
+          <input type="number" id="price" min="0" step="1" placeholder="150">
+        </label>
+
+        <label>
+          Sist klippet
+          <input type="date" id="last-mowed">
+        </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="flyer-delivered">
+          Flyer levert
+        </label>
+        <label id="flyer-date-wrap" class="hidden">
+          Flyer dato
+          <input type="date" id="flyer-date">
+        </label>
+
+        <label>
+          Notat (valgfritt)
+          <input type="text" id="notes" placeholder="f.eks. hund i hagen">
+        </label>
+
+        <input type="hidden" id="lat">
+        <input type="hidden" id="lng">
+
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Lagre</button>
+          <button type="button" id="btn-cancel" class="btn secondary hidden">Avbryt</button>
+          <button type="button" id="btn-delete" class="btn danger hidden">Slett</button>
+        </div>
+      </form>
+      <p class="hint">Endringer synkes automatisk til alle enheter. Posisjon hentes ved lagring – bruk «Finn på kart» for å justere.</p>
+    </section>
+  </main>
+
+  <dialog id="detail-dialog" class="dialog">
+    <div id="detail-content"></div>
+    <form method="dialog" class="dialog-actions">
+      <button type="submit" class="btn secondary">Lukk</button>
+      <button type="button" id="detail-edit" class="btn primary">Rediger</button>
+    </form>
+  </dialog>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

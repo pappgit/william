@@ -1,0 +1,14 @@
+[
+  {
+    "id": "example-1",
+    "address": "Eksempelveien 1",
+    "size": "medium",
+    "price": 150,
+    "lastMowed": "2026-05-10",
+    "flyerDelivered": true,
+    "flyerDate": "2026-04-01",
+    "notes": null,
+    "lat": 59.95,
+    "lng": 10.75
+  }
+]
