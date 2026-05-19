@@ -142,19 +142,50 @@ main {
 
 .filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.75rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
 
-.filters input,
-.filters select {
-  flex: 1;
+.filters input[type="search"] {
+  flex: 1 1 100%;
+  min-width: 0;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 1rem;
+}
+
+.filters select {
+  flex: 1 1 calc(50% - 0.5rem);
+  min-width: 7rem;
+  padding: 0.5rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+
+.btn-filter-reset {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.filter-summary {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
 }
 
 .table-wrap {

@@ -50,33 +50,97 @@ document.querySelectorAll('.tab').forEach((tab) => {
   });
 });
 
-$('#search').addEventListener('input', renderList);
-$('#filter-status').addEventListener('change', renderList);
+['search', 'filter-status', 'filter-size', 'filter-flyer', 'filter-sort'].forEach((id) => {
+  const el = document.getElementById(id);
+  el?.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', renderList);
+});
+
+$('#filter-reset')?.addEventListener('click', () => {
+  $('#search').value = '';
+  $('#filter-status').value = 'all';
+  $('#filter-size').value = 'all';
+  $('#filter-flyer').value = 'all';
+  $('#filter-sort').value = 'mowed-desc';
+  renderList();
+});
+
+function isFilterActive() {
+  return (
+    $('#search').value.trim() !== '' ||
+    $('#filter-status').value !== 'all' ||
+    $('#filter-size').value !== 'all' ||
+    $('#filter-flyer').value !== 'all'
+  );
+}
+
+function filterAndSortList() {
+  const q = $('#search').value.trim().toLowerCase();
+  const status = $('#filter-status').value;
+  const size = $('#filter-size').value;
+  const flyer = $('#filter-flyer').value;
+  const sort = $('#filter-sort').value;
+
+  let list = [...addresses];
+
+  if (status !== 'all') {
+    list = list.filter((a) => getStatus(a) === status);
+  }
+  if (size !== 'all') {
+    list = list.filter((a) => (a.size || 'medium') === size);
+  }
+  if (flyer === 'yes') {
+    list = list.filter((a) => a.flyerDelivered);
+  } else if (flyer === 'no') {
+    list = list.filter((a) => !a.flyerDelivered);
+  }
+  if (q) {
+    list = list.filter(
+      (a) =>
+        a.address.toLowerCase().includes(q) ||
+        (a.notes && a.notes.toLowerCase().includes(q))
+    );
+  }
+
+  list.sort((a, b) => {
+    switch (sort) {
+      case 'mowed-asc':
+        return (a.lastMowed || '').localeCompare(b.lastMowed || '');
+      case 'address-asc':
+        return a.address.localeCompare(b.address, 'no');
+      case 'price-desc':
+        return (b.price ?? -1) - (a.price ?? -1);
+      case 'mowed-desc':
+      default:
+        return (b.lastMowed || '').localeCompare(a.lastMowed || '');
+    }
+  });
+
+  return list;
+}
 
 // —— Liste ——
 
 function renderList() {
-  const q = $('#search').value.trim().toLowerCase();
-  const filter = $('#filter-status').value;
-  let list = [...addresses];
-
-  if (filter !== 'all') {
-    list = list.filter((a) => getStatus(a) === filter);
-  }
-  if (q) {
-    list = list.filter((a) => a.address.toLowerCase().includes(q));
-  }
-
-  list.sort((a, b) => (b.lastMowed || '').localeCompare(a.lastMowed || ''));
-
+  const list = filterAndSortList();
   const tbody = $('#list-body');
   tbody.innerHTML = '';
 
-  if (list.length === 0) {
+  $('#list-empty').classList.add('hidden');
+  $('#list-no-match').classList.add('hidden');
+
+  if (addresses.length === 0) {
     $('#list-empty').classList.remove('hidden');
+    $('#filter-summary').classList.add('hidden');
     return;
   }
-  $('#list-empty').classList.add('hidden');
+
+  if (list.length === 0) {
+    $('#list-no-match').classList.remove('hidden');
+    updateFilterSummary(0);
+    return;
+  }
+
+  updateFilterSummary(list.length);
 
   for (const a of list) {
     const tr = document.createElement('tr');
@@ -91,6 +155,16 @@ function renderList() {
     tr.addEventListener('click', () => showDetail(a.id));
     tbody.appendChild(tr);
   }
+}
+
+function updateFilterSummary(shown) {
+  const el = $('#filter-summary');
+  if (!isFilterActive()) {
+    el.classList.add('hidden');
+    return;
+  }
+  el.textContent = `Viser ${shown} av ${addresses.length} adresser`;
+  el.classList.remove('hidden');
 }
 
 function escapeHtml(s) {

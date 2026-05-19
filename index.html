@@ -30,13 +30,32 @@
     <section id="view-list" class="view active">
       <div class="filters">
         <input type="search" id="search" placeholder="Søk adresse…" autocomplete="off">
-        <select id="filter-status">
-          <option value="all">Alle</option>
+        <select id="filter-status" title="Status">
+          <option value="all">Status: alle</option>
           <option value="mowed">Klippet</option>
-          <option value="flyer">Flyer levert</option>
+          <option value="flyer">Kun flyer</option>
           <option value="none">Ikke besøkt</option>
         </select>
+        <select id="filter-size" title="Størrelse">
+          <option value="all">Størrelse: alle</option>
+          <option value="liten">Liten</option>
+          <option value="medium">Medium</option>
+          <option value="stor">Stor</option>
+        </select>
+        <select id="filter-flyer" title="Flyer">
+          <option value="all">Flyer: alle</option>
+          <option value="yes">Flyer: ja</option>
+          <option value="no">Flyer: nei</option>
+        </select>
+        <select id="filter-sort" title="Sortering">
+          <option value="mowed-desc">Sist klippet (nyest)</option>
+          <option value="mowed-asc">Sist klippet (eldst)</option>
+          <option value="address-asc">Adresse A–Å</option>
+          <option value="price-desc">Pris (høyest)</option>
+        </select>
+        <button type="button" id="filter-reset" class="btn-filter-reset" title="Nullstill filtre">×</button>
       </div>
+      <p id="filter-summary" class="filter-summary hidden"></p>
       <div class="table-wrap">
         <table class="data-table">
           <thead>
@@ -52,6 +71,7 @@
           <tbody id="list-body"></tbody>
         </table>
         <p id="list-empty" class="empty hidden">Ingen adresser ennå. Trykk «Ny» for å legge til.</p>
+        <p id="list-no-match" class="empty hidden">Ingen adresser matcher filteret.</p>
       </div>
     </section>
 
