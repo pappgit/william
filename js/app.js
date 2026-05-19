@@ -151,10 +151,40 @@ function renderList() {
       <td>${a.price != null && a.price !== '' ? a.price + ' kr' : '–'}</td>
       <td><span class="badge ${a.flyerDelivered ? 'yes' : 'no'}">${a.flyerDelivered ? formatDate(a.flyerDate) : 'Nei'}</span></td>
       <td class="note-cell">${a.notes ? escapeHtml(a.notes) : '–'}</td>
+      ${listCheckCell(a.id, 'done', a.done, 'Ferdig')}
+      ${listCheckCell(a.id, 'invoiceSent', a.invoiceSent, 'Sendt faktura')}
+      ${listCheckCell(a.id, 'paymentReceived', a.paymentReceived, 'Mottatt betaling')}
     `;
-    tr.addEventListener('click', () => showDetail(a.id));
+    tr.querySelectorAll('.list-check').forEach((cb) => {
+      cb.addEventListener('click', (e) => e.stopPropagation());
+      cb.addEventListener('change', (e) => {
+        e.stopPropagation();
+        toggleAddressFlag(a.id, cb.dataset.field, cb.checked);
+      });
+    });
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('.check-cell')) return;
+      showDetail(a.id);
+    });
     tbody.appendChild(tr);
   }
+}
+
+function listCheckCell(id, field, checked, label) {
+  return `<td class="check-cell">
+    <input type="checkbox" class="list-check" data-id="${escapeHtml(id)}" data-field="${field}"
+      ${checked ? 'checked' : ''} title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
+  </td>`;
+}
+
+function toggleAddressFlag(id, field, value) {
+  const allowed = ['done', 'invoiceSent', 'paymentReceived'];
+  if (!allowed.includes(field)) return;
+  const idx = addresses.findIndex((x) => x.id === id);
+  if (idx < 0) return;
+  addresses[idx] = normalizeAddress({ ...addresses[idx], [field]: value });
+  saveAddresses(addresses);
+  renderList();
 }
 
 function updateFilterSummary(shown) {
@@ -187,6 +217,9 @@ function popupContent(a) {
         <dt>Sist klippet</dt><dd>${formatDate(a.lastMowed)}</dd>
         <dt>Flyer</dt><dd>${flyerText}</dd>
         ${a.notes ? `<dt>Notat</dt><dd>${escapeHtml(a.notes)}</dd>` : ''}
+        <dt>Ferdig</dt><dd>${a.done ? 'Ja' : 'Nei'}</dd>
+        <dt>Sendt faktura</dt><dd>${a.invoiceSent ? 'Ja' : 'Nei'}</dd>
+        <dt>Mottatt betaling</dt><dd>${a.paymentReceived ? 'Ja' : 'Nei'}</dd>
       </dl>
     </div>
   `;
@@ -204,6 +237,9 @@ function showDetail(id) {
       <dt>Pris</dt><dd>${a.price != null && a.price !== '' ? a.price + ' kr' : '–'}</dd>
       <dt>Flyer</dt><dd>${a.flyerDelivered ? 'Ja, ' + formatDate(a.flyerDate) : 'Nei'}</dd>
       ${a.notes ? `<dt>Notat</dt><dd>${escapeHtml(a.notes)}</dd>` : ''}
+      <dt>Ferdig</dt><dd>${a.done ? 'Ja' : 'Nei'}</dd>
+      <dt>Sendt faktura</dt><dd>${a.invoiceSent ? 'Ja' : 'Nei'}</dd>
+      <dt>Mottatt betaling</dt><dd>${a.paymentReceived ? 'Ja' : 'Nei'}</dd>
       ${!hasCoords(a) ? '<dt>Kart</dt><dd>Mangler posisjon</dd>' : ''}
     </dl>
   `;
@@ -432,6 +468,9 @@ $('#address-form').addEventListener('submit', async (e) => {
     flyerDelivered: $('#flyer-delivered').checked,
     flyerDate: $('#flyer-delivered').checked ? $('#flyer-date').value || null : null,
     notes: $('#notes').value.trim() || null,
+    done: $('#done').checked,
+    invoiceSent: $('#invoice-sent').checked,
+    paymentReceived: $('#payment-received').checked,
     lat,
     lng,
   });
@@ -474,6 +513,9 @@ function openEdit(id) {
   $('#flyer-date').value = a.flyerDate || '';
   $('#flyer-date-wrap').classList.toggle('hidden', !a.flyerDelivered);
   $('#notes').value = a.notes || '';
+  $('#done').checked = !!a.done;
+  $('#invoice-sent').checked = !!a.invoiceSent;
+  $('#payment-received').checked = !!a.paymentReceived;
   $('#lat').value = a.lat ?? '';
   $('#lng').value = a.lng ?? '';
   $('#btn-cancel').classList.remove('hidden');

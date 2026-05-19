@@ -66,6 +66,9 @@
               <th>Pris</th>
               <th>Flyer</th>
               <th>Notat</th>
+              <th class="check-col" title="Ferdig">Ferdig</th>
+              <th class="check-col" title="Sendt faktura">Fakt.</th>
+              <th class="check-col" title="Mottatt betaling">Betalt</th>
             </tr>
           </thead>
           <tbody id="list-body"></tbody>
@@ -125,6 +128,22 @@
           Notat (valgfritt)
           <input type="text" id="notes" placeholder="f.eks. hund i hagen">
         </label>
+
+        <fieldset class="fieldset-checks">
+          <legend>Økonomi / status</legend>
+          <label class="checkbox-label">
+            <input type="checkbox" id="done">
+            Ferdig
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="invoice-sent">
+            Sendt faktura
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="payment-received">
+            Mottatt betaling
+          </label>
+        </fieldset>
 
         <input type="hidden" id="lat">
         <input type="hidden" id="lng">

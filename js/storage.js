@@ -83,7 +83,14 @@ function normalizeAddress(a) {
   const lat = parseCoord(a.lat);
   const lng = parseCoord(a.lng) ?? parseCoord(a.lon);
   const { lon, ...rest } = a;
-  return { ...rest, lat, lng };
+  return {
+    ...rest,
+    lat,
+    lng,
+    done: !!a.done,
+    invoiceSent: !!a.invoiceSent,
+    paymentReceived: !!a.paymentReceived,
+  };
 }
 
 function parseCoord(v) {
