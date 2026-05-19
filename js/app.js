@@ -24,6 +24,19 @@ let repairingCoords = false;
 
 const $ = (sel) => document.querySelector(sel);
 
+function updateChromeHeight() {
+  const chrome = document.querySelector('.app-chrome');
+  if (!chrome) return;
+  const h = chrome.getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--chrome-h', `${Math.ceil(h)}px`);
+}
+
+let chromeResizeTimer;
+function scheduleChromeHeightUpdate() {
+  clearTimeout(chromeResizeTimer);
+  chromeResizeTimer = setTimeout(updateChromeHeight, 50);
+}
+
 function toast(msg) {
   let el = document.querySelector('.toast');
   if (!el) {
@@ -253,13 +266,17 @@ function setDetailConvertMode(active) {
 }
 
 function openDetailModal() {
+  updateChromeHeight();
   const overlay = $('#detail-overlay');
   overlay.classList.remove('hidden');
   overlay.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-open');
   requestAnimationFrame(() => {
-    const wrap = $('#detail-scroll-wrap');
-    if (wrap) wrap.scrollTop = 0;
+    updateChromeHeight();
+    requestAnimationFrame(() => {
+      const wrap = $('#detail-scroll-wrap');
+      if (wrap) wrap.scrollTop = 0;
+    });
   });
 }
 
@@ -779,6 +796,13 @@ function applyAddresses(list) {
 async function bootstrap() {
   addresses = loadAddresses().map(normalizeAddress);
   renderList();
+  updateChromeHeight();
+
+  window.addEventListener('resize', scheduleChromeHeightUpdate);
+  window.addEventListener('orientationchange', () => {
+    scheduleChromeHeightUpdate();
+    setTimeout(updateChromeHeight, 150);
+  });
 
   await initSync((list) => {
     applyAddresses(list);

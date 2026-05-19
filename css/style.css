@@ -18,8 +18,7 @@
   --tabs-h: 52px;
   --footer-h: 88px;
   --touch: 44px;
-  --chrome-h: calc(env(safe-area-inset-top, 0px) + var(--header-h) + var(--tabs-h));
-  --detail-actions-h: 220px;
+  --chrome-h: 108px;
 }
 
 * {
@@ -42,10 +41,20 @@ body {
   -webkit-tap-highlight-color: transparent;
   display: flex;
   flex-direction: column;
+}
+
+body.modal-open {
   overflow: hidden;
 }
 
-/* —— Header —— */
+/* —— Header + faner (alltid over detalj) —— */
+.app-chrome {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 .header {
   flex-shrink: 0;
   min-height: var(--header-h);
@@ -57,8 +66,6 @@ body {
   padding: 0.75rem 1rem;
   padding-top: max(0.75rem, env(safe-area-inset-top));
   box-shadow: var(--shadow);
-  position: relative;
-  z-index: 100;
 }
 
 .header h1 {
@@ -126,9 +133,7 @@ body {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   min-height: var(--tabs-h);
-  padding-bottom: env(safe-area-inset-left);
-  position: relative;
-  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .tab {
@@ -669,6 +674,7 @@ main {
 /* —— Detalj-panel (under header + faner, scrollbar innhold) —— */
 body.modal-open main {
   overflow: hidden;
+  touch-action: none;
 }
 
 .detail-overlay {
@@ -680,6 +686,7 @@ body.modal-open main {
   z-index: 50;
   display: flex;
   flex-direction: column;
+  pointer-events: auto;
 }
 
 .detail-overlay.hidden {
@@ -702,8 +709,9 @@ body.modal-open main {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  max-height: 100%;
   width: 100%;
   background: var(--surface);
   box-shadow: 0 -4px 24px rgba(27, 67, 50, 0.12);
@@ -715,13 +723,11 @@ body.modal-open main {
 }
 
 .detail-scroll-wrap {
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-height: 0;
-  height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
   overscroll-behavior: contain;
   padding: 1rem 1.25rem;
 }
@@ -786,21 +792,15 @@ body.modal-open main {
   .detail-overlay {
     padding: 1rem;
     align-items: center;
+    justify-content: center;
   }
 
   .detail-panel {
     max-width: 420px;
-    max-height: calc(100dvh - var(--chrome-h) - 2rem);
-    border-radius: var(--radius);
-    flex: 0 1 auto;
-    height: auto;
-    min-height: 200px;
-  }
-
-  .detail-scroll-wrap {
-    height: auto;
-    max-height: calc(100dvh - var(--chrome-h) - var(--detail-actions-h) - 2rem);
     flex: 1 1 auto;
+    max-height: calc(100dvh - var(--chrome-h) - 2rem);
+    min-height: 0;
+    border-radius: var(--radius);
   }
 }
 

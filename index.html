@@ -10,7 +10,8 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header class="header">
+  <div class="app-chrome">
+    <header class="header">
     <h1>William Gressklipp</h1>
     <div class="header-actions">
       <span id="sync-status" class="sync-status loading" title="Kobler til…"></span>
@@ -18,13 +19,14 @@
       <button type="button" id="btn-import" class="btn-icon" title="Importer data">↑</button>
       <input type="file" id="import-file" accept=".json" hidden>
     </div>
-  </header>
+    </header>
 
-  <nav class="tabs">
+    <nav class="tabs">
     <button type="button" class="tab active" data-view="list">Liste</button>
     <button type="button" class="tab" data-view="map">Kart</button>
-    <button type="button" class="tab" data-view="add">Ny</button>
-  </nav>
+      <button type="button" class="tab" data-view="add">Ny</button>
+    </nav>
+  </div>
 
   <main>
     <section id="view-list" class="view active">
@@ -215,15 +217,15 @@
         </div>
       </div>
       <div id="detail-actions-normal" class="detail-actions">
-      <button type="button" id="detail-delete" class="btn danger">Slett</button>
-      <button type="button" id="detail-close" class="btn secondary">Lukk</button>
-      <button type="button" id="detail-convert" class="btn secondary hidden">Konverter til ordre</button>
-      <button type="button" id="detail-edit" class="btn primary">Rediger</button>
-    </div>
-    <div id="detail-actions-convert" class="detail-actions hidden">
-      <button type="button" id="detail-convert-cancel" class="btn secondary">Avbryt</button>
-      <button type="button" id="detail-convert-confirm" class="btn primary">Bekreft konvertering</button>
-    </div>
+        <button type="button" id="detail-delete" class="btn danger">Slett</button>
+        <button type="button" id="detail-close" class="btn secondary">Lukk</button>
+        <button type="button" id="detail-convert" class="btn secondary hidden">Konverter til ordre</button>
+        <button type="button" id="detail-edit" class="btn primary">Rediger</button>
+      </div>
+      <div id="detail-actions-convert" class="detail-actions hidden">
+        <button type="button" id="detail-convert-cancel" class="btn secondary">Avbryt</button>
+        <button type="button" id="detail-convert-confirm" class="btn primary">Bekreft konvertering</button>
+      </div>
     </div>
   </div>
 
