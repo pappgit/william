@@ -179,7 +179,7 @@ function renderList() {
     `;
     tr.querySelector('.btn-convert')?.addEventListener('click', (e) => {
       e.stopPropagation();
-      convertFlyerToOrder(a.id);
+      showDetail(a.id, true);
     });
     tr.querySelectorAll('.list-check').forEach((cb) => {
       cb.addEventListener('click', (e) => e.stopPropagation());
@@ -214,9 +214,19 @@ function toggleAddressFlag(id, field, value) {
   if (field === 'done') refreshMap();
 }
 
+function deleteAddress(id) {
+  if (!id || !confirm('Slette denne adressen permanent?')) return false;
+  addresses = addresses.filter((a) => a.id !== id);
+  saveAddresses(addresses);
+  renderList();
+  refreshMap();
+  toast('Slettet');
+  return true;
+}
+
 function convertFlyerToOrder(id) {
   const idx = addresses.findIndex((x) => x.id === id);
-  if (idx < 0 || !isFlyerEntry(addresses[idx])) return;
+  if (idx < 0 || !isFlyerEntry(addresses[idx])) return false;
   addresses[idx] = normalizeAddress({
     ...addresses[idx],
     entryType: 'order',
@@ -226,7 +236,13 @@ function convertFlyerToOrder(id) {
   renderList();
   refreshMap();
   toast('Flyer konvertert til ordre');
-  openEdit(id);
+  return true;
+}
+
+function setDetailConvertMode(active) {
+  $('#detail-convert-prompt').classList.toggle('hidden', !active);
+  $('#detail-actions-normal').classList.toggle('hidden', active);
+  $('#detail-actions-convert').classList.toggle('hidden', !active);
 }
 
 function getFormEntryType() {
@@ -302,7 +318,7 @@ function popupContent(a) {
   `;
 }
 
-function showDetail(id) {
+function showDetail(id, convertMode = false) {
   const a = addresses.find((x) => x.id === id);
   if (!a) return;
   selectedDetailId = id;
@@ -323,13 +339,39 @@ function showDetail(id) {
       ${!hasCoords(a) ? '<dt>Kart</dt><dd>Mangler posisjon</dd>' : ''}
     </dl>
   `;
-  $('#detail-convert').classList.toggle('hidden', !flyer);
-  $('#detail-dialog').showModal();
+  $('#detail-convert').classList.toggle('hidden', !flyer || convertMode);
+  setDetailConvertMode(convertMode && flyer);
+  const dialog = $('#detail-dialog');
+  dialog.showModal();
+  dialog.querySelector('.dialog-scroll')?.scrollTo(0, 0);
 }
 
-$('#detail-convert').addEventListener('click', () => {
+$('#detail-close').addEventListener('click', () => {
   $('#detail-dialog').close();
-  if (selectedDetailId) convertFlyerToOrder(selectedDetailId);
+});
+
+$('#detail-delete').addEventListener('click', () => {
+  if (!selectedDetailId) return;
+  if (deleteAddress(selectedDetailId)) {
+    $('#detail-dialog').close();
+    selectedDetailId = null;
+  }
+});
+
+$('#detail-convert').addEventListener('click', () => {
+  if (selectedDetailId) showDetail(selectedDetailId, true);
+});
+
+$('#detail-convert-cancel').addEventListener('click', () => {
+  if (selectedDetailId) showDetail(selectedDetailId, false);
+});
+
+$('#detail-convert-confirm').addEventListener('click', () => {
+  if (!selectedDetailId) return;
+  if (convertFlyerToOrder(selectedDetailId)) {
+    $('#detail-dialog').close();
+    openEdit(selectedDetailId);
+  }
 });
 
 $('#detail-edit').addEventListener('click', () => {
@@ -668,14 +710,11 @@ $('#btn-cancel').addEventListener('click', () => {
 
 $('#btn-delete').addEventListener('click', () => {
   const id = $('#edit-id').value;
-  if (!id || !confirm('Slette denne adressen?')) return;
-  addresses = addresses.filter((a) => a.id !== id);
-  saveAddresses(addresses);
-  resetForm();
-  renderList();
-  refreshMap();
-  document.querySelector('[data-view="list"]').click();
-  toast('Slettet');
+  if (!id) return;
+  if (deleteAddress(id)) {
+    resetForm();
+    document.querySelector('[data-view="list"]').click();
+  }
 });
 
 // —— Eksport / import (synk mellom telefoner via fil) ——

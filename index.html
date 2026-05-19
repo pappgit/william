@@ -203,12 +203,23 @@
   </main>
 
   <dialog id="detail-dialog" class="dialog">
-    <div id="detail-content"></div>
-    <form method="dialog" class="dialog-actions">
-      <button type="submit" class="btn secondary">Lukk</button>
+    <div class="dialog-scroll">
+      <div id="detail-content"></div>
+      <div id="detail-convert-prompt" class="convert-prompt hidden">
+        <p><strong>Konvertere til ordre?</strong></p>
+        <p>Flyer-raden blir en ordre du kan fylle ut med pris, klipping og faktura. Trykk «Bekreft konvertering» nederst – ellers skjer ingenting.</p>
+      </div>
+    </div>
+    <div id="detail-actions-normal" class="dialog-actions">
+      <button type="button" id="detail-delete" class="btn danger">Slett</button>
+      <button type="button" id="detail-close" class="btn secondary">Lukk</button>
       <button type="button" id="detail-convert" class="btn secondary hidden">Konverter til ordre</button>
       <button type="button" id="detail-edit" class="btn primary">Rediger</button>
-    </form>
+    </div>
+    <div id="detail-actions-convert" class="dialog-actions hidden">
+      <button type="button" id="detail-convert-cancel" class="btn secondary">Avbryt</button>
+      <button type="button" id="detail-convert-confirm" class="btn primary">Bekreft konvertering</button>
+    </div>
   </dialog>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
