@@ -80,9 +80,37 @@ function getStatus(addr) {
   return 'none';
 }
 
+function todayISO() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/** Normaliser til YYYY-MM-DD eller null */
+function toISODate(value) {
+  if (value == null || value === '') return null;
+  const s = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+  if (m) {
+    const [, d, mo, y] = m;
+    return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  const dt = new Date(s);
+  if (Number.isNaN(dt.getTime())) return null;
+  const y = dt.getFullYear();
+  const mo = String(dt.getMonth() + 1).padStart(2, '0');
+  const day = String(dt.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${day}`;
+}
+
 function formatDate(iso) {
   if (!iso) return '–';
-  const [y, m, d] = iso.split('-');
+  const normalized = toISODate(iso);
+  if (!normalized) return '–';
+  const [y, m, d] = normalized.split('-');
   return `${d}.${m}.${y}`;
 }
 

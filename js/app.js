@@ -19,6 +19,7 @@ let addresses = [];
 let map = null;
 let markersLayer = null;
 let selectedDetailId = null;
+let detailConvertMode = false;
 let pickMode = false;
 let repairingCoords = false;
 
@@ -59,12 +60,17 @@ document.querySelectorAll('.tab').forEach((tab) => {
     document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
     $(`#view-${view}`).classList.add('active');
     if (view === 'map') {
-      setTimeout(async () => {
+      requestAnimationFrame(() => {
         initMap();
-        map?.invalidateSize();
-        await repairMissingCoords();
-        refreshMap();
-      }, 100);
+        requestAnimationFrame(() => {
+          map?.invalidateSize();
+          setTimeout(async () => {
+            map?.invalidateSize();
+            await repairMissingCoords();
+            refreshMap();
+          }, 150);
+        });
+      });
     }
     if (view === 'add' && !$('#edit-id').value) resetForm();
   });
@@ -232,6 +238,55 @@ function toggleAddressFlag(id, field, value) {
   saveAddresses(addresses);
   renderList();
   if (field === 'done') refreshMap();
+  if (selectedDetailId === id && !$('#detail-overlay').classList.contains('hidden')) {
+    showDetail(id, detailConvertMode);
+  }
+}
+
+function updateAddressField(id, patch) {
+  const idx = addresses.findIndex((x) => x.id === id);
+  if (idx < 0) return;
+  addresses[idx] = normalizeAddress({ ...addresses[idx], ...patch });
+  saveAddresses(addresses);
+  renderList();
+  refreshMap();
+}
+
+function detailCheckRow(id, field, checked, label) {
+  return `<label class="detail-check-label">
+    <input type="checkbox" class="detail-check" data-id="${escapeHtml(id)}" data-field="${field}"
+      ${checked ? 'checked' : ''} aria-label="${escapeHtml(label)}">
+    <span>${escapeHtml(label)}</span>
+  </label>`;
+}
+
+function bindDetailInteractions(id) {
+  $('#detail-content').querySelectorAll('.detail-check').forEach((cb) => {
+    cb.addEventListener('click', (e) => e.stopPropagation());
+    cb.addEventListener('change', (e) => {
+      e.stopPropagation();
+      toggleAddressFlag(cb.dataset.id, cb.dataset.field, cb.checked);
+    });
+  });
+  const dateInput = $('#detail-content').querySelector('.detail-date-input');
+  if (dateInput) {
+    dateInput.addEventListener('change', () => {
+      updateAddressField(id, { lastMowed: toISODate(dateInput.value) });
+      if (selectedDetailId === id) showDetail(id, detailConvertMode);
+    });
+  }
+}
+
+function bindDateQuickButtons() {
+  document.querySelectorAll('.btn-date-quick').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (!input) return;
+      if (btn.hasAttribute('data-clear')) input.value = '';
+      else input.value = todayISO();
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  });
 }
 
 function deleteAddress(id) {
@@ -300,7 +355,7 @@ function updateFormForEntryType() {
   $('#flyer-sent-date').required = t === 'flyer';
   $('#address').required = t === 'order';
   if (t === 'flyer' && !$('#flyer-sent-date').value) {
-    $('#flyer-sent-date').value = new Date().toISOString().slice(0, 10);
+    $('#flyer-sent-date').value = todayISO();
   }
   if (t) {
     const section = t === 'flyer' ? $('#flyer-only-fields') : $('#order-fields');
@@ -365,26 +420,38 @@ function showDetail(id, convertMode = false) {
   const a = addresses.find((x) => x.id === id);
   if (!a) return;
   selectedDetailId = id;
+  detailConvertMode = convertMode;
   const flyer = isFlyerEntry(a);
+  const isoMowed = toISODate(a.lastMowed) || '';
   $('#detail-content').innerHTML = `
     <h2>${escapeHtml(a.address)}</h2>
     <p><span class="badge type-${flyer ? 'flyer' : 'order'}">${entryTypeLabel(a)}</span></p>
     <dl>
       ${flyer ? `<dt>Sendt ut</dt><dd>${formatDate(a.flyerDate)}</dd>` : ''}
-      ${!flyer ? `<dt>Sist klippet</dt><dd>${formatDate(a.lastMowed)}</dd>` : ''}
       ${!flyer ? `<dt>Størrelse</dt><dd>${formatSize(a.size)}</dd>` : ''}
       ${!flyer ? `<dt>Pris</dt><dd>${a.price != null && a.price !== '' ? a.price + ' kr' : '–'}</dd>` : ''}
       ${!flyer ? `<dt>Flyer tidligere</dt><dd>${a.flyerDelivered ? 'Ja, ' + formatDate(a.flyerDate) : 'Nei'}</dd>` : ''}
       ${a.notes && !flyer ? `<dt>Notat</dt><dd>${escapeHtml(a.notes)}</dd>` : ''}
-      ${!flyer ? `<dt>Ferdig</dt><dd>${a.done ? 'Ja' : 'Nei'}</dd>` : ''}
-      ${!flyer ? `<dt>Sendt faktura</dt><dd>${a.invoiceSent ? 'Ja' : 'Nei'}</dd>` : ''}
-      ${!flyer ? `<dt>Mottatt betaling</dt><dd>${a.paymentReceived ? 'Ja' : 'Nei'}</dd>` : ''}
       ${!hasCoords(a) ? '<dt>Kart</dt><dd>Mangler posisjon</dd>' : ''}
     </dl>
+    ${
+      !flyer
+        ? `<label class="detail-date-field">Sist klippet
+      <input type="date" class="detail-date-input" value="${isoMowed}">
+    </label>
+    <fieldset class="detail-checks">
+      <legend>Økonomi / status</legend>
+      ${detailCheckRow(a.id, 'done', a.done, 'Ferdig')}
+      ${detailCheckRow(a.id, 'invoiceSent', a.invoiceSent, 'Sendt faktura')}
+      ${detailCheckRow(a.id, 'paymentReceived', a.paymentReceived, 'Mottatt betaling')}
+    </fieldset>`
+        : ''
+    }
   `;
+  bindDetailInteractions(id);
   $('#detail-convert').classList.toggle('hidden', !flyer || convertMode);
   setDetailConvertMode(convertMode && flyer);
-  openDetailModal();
+  if ($('#detail-overlay').classList.contains('hidden')) openDetailModal();
 }
 
 $('#detail-backdrop').addEventListener('click', closeDetailModal);
@@ -430,6 +497,8 @@ function initMap() {
     maxZoom: 19,
   }).addTo(map);
   markersLayer = L.layerGroup().addTo(map);
+
+  setTimeout(() => map?.invalidateSize(), 0);
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -501,7 +570,8 @@ function refreshMap() {
       banner = document.createElement('p');
       banner.id = 'map-missing-banner';
       banner.className = 'map-banner';
-      $('#view-map').insertBefore(banner, $('#map'));
+      const mapEl = $('#map');
+      (mapEl?.parentElement || $('#view-map')).insertBefore(banner, mapEl);
     }
     banner.textContent = `${missing} adresse(r) mangler posisjon – rediger og trykk «Finn på kart»`;
     banner.classList.remove('hidden');
@@ -545,7 +615,7 @@ function refreshMap() {
 $('#flyer-delivered').addEventListener('change', () => {
   $('#flyer-date-wrap').classList.toggle('hidden', !$('#flyer-delivered').checked);
   if ($('#flyer-delivered').checked && !$('#flyer-date').value) {
-    $('#flyer-date').value = new Date().toISOString().slice(0, 10);
+    $('#flyer-date').value = todayISO();
   }
 });
 
@@ -620,7 +690,7 @@ $('#address-form').addEventListener('submit', async (e) => {
     toast('Skriv inn adresse');
     return;
   }
-  if (isFlyer && !$('#flyer-sent-date').value) {
+  if (isFlyer && !toISODate($('#flyer-sent-date').value)) {
     toast('Velg dato for når flyer ble sendt ut');
     return;
   }
@@ -657,7 +727,7 @@ $('#address-form').addEventListener('submit', async (e) => {
       id,
       entryType: 'flyer',
       address: addressText,
-      flyerDate: $('#flyer-sent-date').value,
+      flyerDate: toISODate($('#flyer-sent-date').value),
       flyerDelivered: true,
       lat,
       lng,
@@ -669,9 +739,9 @@ $('#address-form').addEventListener('submit', async (e) => {
       address: addressText,
       size: $('#size').value,
       price: $('#price').value === '' ? null : Number($('#price').value),
-      lastMowed: $('#last-mowed').value || null,
+      lastMowed: toISODate($('#last-mowed').value),
       flyerDelivered: $('#flyer-delivered').checked,
-      flyerDate: $('#flyer-delivered').checked ? $('#flyer-date').value || null : null,
+      flyerDate: $('#flyer-delivered').checked ? toISODate($('#flyer-date').value) : null,
       notes: $('#notes').value.trim() || null,
       done: $('#done').checked,
       invoiceSent: $('#invoice-sent').checked,
@@ -723,14 +793,14 @@ function openEdit(id) {
 
   if (flyer) {
     $('#flyer-address').value = a.address;
-    $('#flyer-sent-date').value = a.flyerDate || '';
+    $('#flyer-sent-date').value = toISODate(a.flyerDate) || '';
   } else {
     $('#address').value = a.address;
     $('#size').value = a.size || 'medium';
     $('#price').value = a.price ?? '';
-    $('#last-mowed').value = a.lastMowed || '';
+    $('#last-mowed').value = toISODate(a.lastMowed) || '';
     $('#flyer-delivered').checked = !!a.flyerDelivered;
-    $('#flyer-date').value = a.flyerDate || '';
+    $('#flyer-date').value = toISODate(a.flyerDate) || '';
     $('#flyer-date-wrap').classList.toggle('hidden', !a.flyerDelivered);
     $('#notes').value = a.notes || '';
     $('#done').checked = !!a.done;
@@ -797,8 +867,14 @@ async function bootstrap() {
   addresses = loadAddresses().map(normalizeAddress);
   renderList();
   updateChromeHeight();
+  bindDateQuickButtons();
 
-  window.addEventListener('resize', scheduleChromeHeightUpdate);
+  window.addEventListener('resize', () => {
+    scheduleChromeHeightUpdate();
+    if ($('#view-map').classList.contains('active')) {
+      map?.invalidateSize();
+    }
+  });
   window.addEventListener('orientationchange', () => {
     scheduleChromeHeightUpdate();
     setTimeout(updateChromeHeight, 150);

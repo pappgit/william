@@ -359,16 +359,35 @@ main {
 .hidden { display: none !important; }
 
 /* —— Map —— */
+.view-map {
+  padding: 0;
+}
+
+.map-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .map-legend {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  right: 0.5rem;
+  z-index: 1000;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
-  padding: 0.6rem 0.85rem;
-  background: var(--surface);
-  font-size: 0.82rem;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.94);
+  font-size: 0.8rem;
   font-weight: 500;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  pointer-events: none;
 }
 
 .legend-item {
@@ -390,17 +409,25 @@ main {
 .dot.not-done { background: var(--danger); }
 
 .map-banner {
-  padding: 0.55rem 0.85rem;
+  position: absolute;
+  top: 3.25rem;
+  left: 0.5rem;
+  right: 0.5rem;
+  z-index: 1000;
+  padding: 0.55rem 0.75rem;
   background: #fff8e6;
   color: #664d03;
   font-size: 0.82rem;
-  border-bottom: 1px solid #ffecb5;
-  flex-shrink: 0;
+  border: 1px solid #ffecb5;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
 }
 
 #map {
-  flex: 1;
-  min-height: 180px;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
 }
 
 /* —— Form view (Ny) —— */
@@ -751,6 +778,88 @@ body.modal-open main {
 #detail-content dt {
   color: var(--muted);
   font-weight: 500;
+}
+
+.detail-checks {
+  margin: 1rem 0 0.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.detail-checks legend {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  padding: 0 0.25rem;
+}
+
+.detail-check-label {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: var(--touch);
+  font-size: 0.95rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.detail-check-label + .detail-check-label {
+  margin-top: 0.25rem;
+}
+
+.detail-check-label input {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+  accent-color: var(--green);
+}
+
+.detail-date-field {
+  display: block;
+  margin: 0.75rem 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.detail-date-field input[type="date"] {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  min-height: var(--touch);
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.date-field .date-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.btn-date-quick {
+  border: none;
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.btn-date-quick.btn-date-clear {
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--border);
 }
 
 .convert-prompt {
