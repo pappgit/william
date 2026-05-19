@@ -5,9 +5,15 @@ const DEFAULT_ZOOM = 14;
 
 const MAP_MARKER_SIZE = 24;
 const MAP_COLORS = {
+  flyer: '#e9c46a',
   done: '#2d6a4f',
   notDone: '#c1121f',
 };
+
+function getMapMarkerColor(a) {
+  if (isFlyerEntry(a)) return MAP_COLORS.flyer;
+  return a.done ? MAP_COLORS.done : MAP_COLORS.notDone;
+}
 
 let addresses = [];
 let map = null;
@@ -425,8 +431,8 @@ function initMap() {
   });
 }
 
-function markerIcon(isDone) {
-  const color = isDone ? MAP_COLORS.done : MAP_COLORS.notDone;
+function markerIcon(a) {
+  const color = getMapMarkerColor(a);
   const s = MAP_MARKER_SIZE;
   return L.divIcon({
     className: '',
@@ -486,7 +492,7 @@ function refreshMap() {
 
   for (const a of addresses) {
     if (!hasCoords(a)) continue;
-    const m = L.marker([a.lat, a.lng], { icon: markerIcon(!!a.done) });
+    const m = L.marker([a.lat, a.lng], { icon: markerIcon(a) });
     m.bindPopup(popupContent(a), {
       className: 'leaflet-popup-map',
       closeButton: true,

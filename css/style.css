@@ -375,6 +375,7 @@ main {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
+.dot.flyer-only { background: var(--flyer); }
 .dot.done { background: var(--green); }
 .dot.not-done { background: var(--danger); }
 
