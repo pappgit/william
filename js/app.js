@@ -3,10 +3,10 @@
 const DEFAULT_CENTER = [59.95, 10.75];
 const DEFAULT_ZOOM = 14;
 
-const COLORS = {
-  mowed: '#2d6a4f',
-  flyer: '#e9c46a',
-  none: '#adb5bd',
+const MAP_MARKER_SIZE = 24;
+const MAP_COLORS = {
+  done: '#2d6a4f',
+  notDone: '#c1121f',
 };
 
 let addresses = [];
@@ -185,6 +185,7 @@ function toggleAddressFlag(id, field, value) {
   addresses[idx] = normalizeAddress({ ...addresses[idx], [field]: value });
   saveAddresses(addresses);
   renderList();
+  if (field === 'done') refreshMap();
 }
 
 function updateFilterSummary(shown) {
@@ -281,12 +282,14 @@ function initMap() {
   });
 }
 
-function markerIcon(status) {
+function markerIcon(isDone) {
+  const color = isDone ? MAP_COLORS.done : MAP_COLORS.notDone;
+  const s = MAP_MARKER_SIZE;
   return L.divIcon({
     className: '',
-    html: `<span style="background:${COLORS[status]};width:14px;height:14px;border-radius:50%;display:block;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></span>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
+    html: `<span style="background:${color};width:${s}px;height:${s}px;border-radius:50%;display:block;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.45)"></span>`,
+    iconSize: [s, s],
+    iconAnchor: [s / 2, s / 2],
   });
 }
 
@@ -340,8 +343,7 @@ function refreshMap() {
 
   for (const a of addresses) {
     if (!hasCoords(a)) continue;
-    const status = getStatus(a);
-    const m = L.marker([a.lat, a.lng], { icon: markerIcon(status) });
+    const m = L.marker([a.lat, a.lng], { icon: markerIcon(!!a.done) });
     m.bindPopup(popupContent(a), {
       className: 'leaflet-popup-map',
       closeButton: true,

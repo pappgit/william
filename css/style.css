@@ -324,15 +324,16 @@ main {
 }
 
 .dot {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   display: inline-block;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
-.dot.mowed { background: var(--mowed); }
-.dot.flyer { background: var(--flyer); }
-.dot.none { background: var(--none); }
+.dot.done { background: #2d6a4f; }
+.dot.not-done { background: #c1121f; }
 
 .map-banner {
   padding: 0.5rem 0.75rem;
