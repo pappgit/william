@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#2d6a4f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>William – Gressklipp</title>
@@ -88,103 +88,117 @@
       <div id="map"></div>
     </section>
 
-    <section id="view-add" class="view">
-      <form id="address-form" class="form">
-        <input type="hidden" id="edit-id">
+    <section id="view-add" class="view view-form">
+      <div class="form-scroll">
+        <form id="address-form" class="form">
+          <input type="hidden" id="edit-id">
 
-        <fieldset class="entry-type-picker" id="entry-type-picker">
-          <legend>Hva legger du inn? *</legend>
-          <label class="type-option">
-            <input type="radio" name="entry-type" value="flyer">
-            <span class="type-label">Flyer</span>
-            <small>Adresse og når den ble sendt ut</small>
-          </label>
-          <label class="type-option">
-            <input type="radio" name="entry-type" value="order">
-            <span class="type-label">Ordre</span>
-            <small>Full jobbregistrering</small>
-          </label>
-        </fieldset>
-
-        <div id="flyer-only-fields" class="form-section hidden">
-          <label>
-            Adresse
-            <input type="text" id="flyer-address" placeholder="f.eks. Bjørkeveien 12">
-          </label>
-          <label>
-            Sendt ut (dato)
-            <input type="date" id="flyer-sent-date" required>
-          </label>
-          <button type="button" id="btn-geocode-flyer" class="btn secondary">Finn på kart</button>
-        </div>
-
-        <div id="order-fields" class="form-section hidden">
-          <label>
-            Adresse
-            <input type="text" id="address" placeholder="f.eks. Bjørkeveien 12">
-          </label>
-          <button type="button" id="btn-geocode" class="btn secondary">Finn på kart</button>
-
-          <label>
-            Størrelse
-            <select id="size">
-              <option value="liten">Liten</option>
-              <option value="medium" selected>Medium</option>
-              <option value="stor">Stor</option>
-            </select>
-          </label>
-
-          <label>
-            Pris (kr)
-            <input type="number" id="price" min="0" step="1" placeholder="150">
-          </label>
-
-          <label>
-            Sist klippet
-            <input type="date" id="last-mowed">
-          </label>
-
-          <label class="checkbox-label">
-            <input type="checkbox" id="flyer-delivered">
-            Også fått flyer tidligere
-          </label>
-          <label id="flyer-date-wrap" class="hidden">
-            Flyer sendt ut
-            <input type="date" id="flyer-date">
-          </label>
-
-          <label>
-            Notat (valgfritt)
-            <input type="text" id="notes" placeholder="f.eks. hund i hagen">
-          </label>
-
-          <fieldset class="fieldset-checks">
-            <legend>Økonomi / status</legend>
-            <label class="checkbox-label">
-              <input type="checkbox" id="done">
-              Ferdig
-            </label>
-            <label class="checkbox-label">
-              <input type="checkbox" id="invoice-sent">
-              Sendt faktura
-            </label>
-            <label class="checkbox-label">
-              <input type="checkbox" id="payment-received">
-              Mottatt betaling
-            </label>
+          <fieldset class="entry-type-picker" id="entry-type-picker">
+            <legend>Hva legger du inn?</legend>
+            <div class="type-cards">
+              <label class="type-option">
+                <input type="radio" name="entry-type" value="flyer">
+                <span class="type-card-body">
+                  <span class="type-icon" aria-hidden="true">📄</span>
+                  <span class="type-label">Flyer</span>
+                  <span class="type-desc">Adresse og utsendelsesdato</span>
+                </span>
+              </label>
+              <label class="type-option">
+                <input type="radio" name="entry-type" value="order">
+                <span class="type-card-body">
+                  <span class="type-icon" aria-hidden="true">✂️</span>
+                  <span class="type-label">Ordre</span>
+                  <span class="type-desc">Full jobbregistrering</span>
+                </span>
+              </label>
+            </div>
           </fieldset>
-        </div>
 
-        <input type="hidden" id="lat">
-        <input type="hidden" id="lng">
+          <div id="flyer-only-fields" class="form-section hidden">
+            <p class="form-section-title">Flyer</p>
+            <label>
+              Adresse
+              <input type="text" id="flyer-address" placeholder="f.eks. Bjørkeveien 12" autocomplete="street-address">
+            </label>
+            <label>
+              Sendt ut (dato)
+              <input type="date" id="flyer-sent-date">
+            </label>
+            <button type="button" id="btn-geocode-flyer" class="btn secondary">Finn på kart</button>
+          </div>
 
+          <div id="order-fields" class="form-section hidden">
+            <p class="form-section-title">Ordre</p>
+            <label>
+              Adresse
+              <input type="text" id="address" placeholder="f.eks. Bjørkeveien 12" autocomplete="street-address">
+            </label>
+            <button type="button" id="btn-geocode" class="btn secondary">Finn på kart</button>
+
+            <label>
+              Størrelse
+              <select id="size">
+                <option value="liten">Liten</option>
+                <option value="medium" selected>Medium</option>
+                <option value="stor">Stor</option>
+              </select>
+            </label>
+
+            <label>
+              Pris (kr)
+              <input type="number" id="price" min="0" step="1" placeholder="150">
+            </label>
+
+            <label>
+              Sist klippet
+              <input type="date" id="last-mowed">
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" id="flyer-delivered">
+              Også fått flyer tidligere
+            </label>
+            <label id="flyer-date-wrap" class="hidden">
+              Flyer sendt ut
+              <input type="date" id="flyer-date">
+            </label>
+
+            <label>
+              Notat (valgfritt)
+              <input type="text" id="notes" placeholder="f.eks. hund i hagen">
+            </label>
+
+            <fieldset class="fieldset-checks">
+              <legend>Økonomi / status</legend>
+              <label class="checkbox-label">
+                <input type="checkbox" id="done">
+                Ferdig
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="invoice-sent">
+                Sendt faktura
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="payment-received">
+                Mottatt betaling
+              </label>
+            </fieldset>
+          </div>
+
+          <input type="hidden" id="lat">
+          <input type="hidden" id="lng">
+        </form>
+      </div>
+
+      <div class="form-footer">
         <div class="form-actions">
-          <button type="submit" class="btn primary">Lagre</button>
+          <button type="submit" form="address-form" class="btn primary">Lagre</button>
           <button type="button" id="btn-cancel" class="btn secondary hidden">Avbryt</button>
           <button type="button" id="btn-delete" class="btn danger hidden">Slett</button>
         </div>
-      </form>
-      <p class="hint">Velg Flyer eller Ordre først. Flyer kan senere konverteres til ordre fra listen.</p>
+        <p class="hint">Velg type over, fyll inn feltene, og lagre her nederst.</p>
+      </div>
     </section>
   </main>
 

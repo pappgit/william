@@ -243,6 +243,12 @@ function updateFormForEntryType() {
   if (t === 'flyer' && !$('#flyer-sent-date').value) {
     $('#flyer-sent-date').value = new Date().toISOString().slice(0, 10);
   }
+  if (t) {
+    const section = t === 'flyer' ? $('#flyer-only-fields') : $('#order-fields');
+    setTimeout(() => {
+      section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }
 }
 
 function setFormEntryType(type) {
