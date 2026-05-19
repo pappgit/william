@@ -1,0 +1,24 @@
+{
+  "exportedAt": "2026-05-19T06:09:26Z",
+  "roomId": "william-gressklipp",
+  "source": "supabase",
+  "count": 1,
+  "addresses": [
+    {
+      "id": "acc894a7-96e5-41da-bc8e-fc46e899db89",
+      "lat": 59.902487,
+      "lng": 10.815039,
+      "done": true,
+      "size": "stor",
+      "notes": null,
+      "price": 200,
+      "address": "Høyenhallveien 32b",
+      "entryType": "order",
+      "flyerDate": "2026-05-04",
+      "lastMowed": "2026-05-14",
+      "invoiceSent": true,
+      "flyerDelivered": true,
+      "paymentReceived": true
+    }
+  ]
+}
