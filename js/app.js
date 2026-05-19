@@ -245,6 +245,24 @@ function setDetailConvertMode(active) {
   $('#detail-actions-convert').classList.toggle('hidden', !active);
 }
 
+function openDetailModal() {
+  const overlay = $('#detail-overlay');
+  overlay.classList.remove('hidden');
+  overlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  requestAnimationFrame(() => {
+    const wrap = $('#detail-scroll-wrap');
+    if (wrap) wrap.scrollTop = 0;
+  });
+}
+
+function closeDetailModal() {
+  const overlay = $('#detail-overlay');
+  overlay.classList.add('hidden');
+  overlay.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+}
+
 function getFormEntryType() {
   return document.querySelector('input[name="entry-type"]:checked')?.value;
 }
@@ -341,19 +359,17 @@ function showDetail(id, convertMode = false) {
   `;
   $('#detail-convert').classList.toggle('hidden', !flyer || convertMode);
   setDetailConvertMode(convertMode && flyer);
-  const dialog = $('#detail-dialog');
-  dialog.showModal();
-  dialog.querySelector('.dialog-scroll')?.scrollTo(0, 0);
+  openDetailModal();
 }
 
-$('#detail-close').addEventListener('click', () => {
-  $('#detail-dialog').close();
-});
+$('#detail-backdrop').addEventListener('click', closeDetailModal);
+
+$('#detail-close').addEventListener('click', closeDetailModal);
 
 $('#detail-delete').addEventListener('click', () => {
   if (!selectedDetailId) return;
   if (deleteAddress(selectedDetailId)) {
-    $('#detail-dialog').close();
+    closeDetailModal();
     selectedDetailId = null;
   }
 });
@@ -369,13 +385,13 @@ $('#detail-convert-cancel').addEventListener('click', () => {
 $('#detail-convert-confirm').addEventListener('click', () => {
   if (!selectedDetailId) return;
   if (convertFlyerToOrder(selectedDetailId)) {
-    $('#detail-dialog').close();
+    closeDetailModal();
     openEdit(selectedDetailId);
   }
 });
 
 $('#detail-edit').addEventListener('click', () => {
-  $('#detail-dialog').close();
+  closeDetailModal();
   if (selectedDetailId) openEdit(selectedDetailId);
 });
 

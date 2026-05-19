@@ -202,25 +202,29 @@
     </section>
   </main>
 
-  <dialog id="detail-dialog" class="dialog">
-    <div class="dialog-scroll">
+  <div id="detail-overlay" class="detail-overlay hidden" aria-hidden="true">
+    <button type="button" class="detail-backdrop" id="detail-backdrop" aria-label="Lukk"></button>
+    <div class="detail-panel" role="dialog" aria-modal="true">
+      <div class="detail-handle" aria-hidden="true"></div>
+      <div class="detail-scroll-wrap" id="detail-scroll-wrap">
       <div id="detail-content"></div>
       <div id="detail-convert-prompt" class="convert-prompt hidden">
         <p><strong>Konvertere til ordre?</strong></p>
         <p>Flyer-raden blir en ordre du kan fylle ut med pris, klipping og faktura. Trykk «Bekreft konvertering» nederst – ellers skjer ingenting.</p>
       </div>
     </div>
-    <div id="detail-actions-normal" class="dialog-actions">
+    <div id="detail-actions-normal" class="detail-actions">
       <button type="button" id="detail-delete" class="btn danger">Slett</button>
       <button type="button" id="detail-close" class="btn secondary">Lukk</button>
       <button type="button" id="detail-convert" class="btn secondary hidden">Konverter til ordre</button>
       <button type="button" id="detail-edit" class="btn primary">Rediger</button>
     </div>
-    <div id="detail-actions-convert" class="dialog-actions hidden">
+    <div id="detail-actions-convert" class="detail-actions hidden">
       <button type="button" id="detail-convert-cancel" class="btn secondary">Avbryt</button>
       <button type="button" id="detail-convert-confirm" class="btn primary">Bekreft konvertering</button>
     </div>
-  </dialog>
+    </div>
+  </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.min.js"></script>
